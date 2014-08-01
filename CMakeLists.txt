@@ -113,3 +113,7 @@ TARGET_LINK_LIBRARIES(refactorial
 # debug crazy system-header-indlude-problems in linked clang:
 #    echo '#include <stdarg.h> \nint main(){return 0;}' | ~/llvm.install/bin/clang -xc -v -
 # but this class "clang", where the libclang might be different
+#
+# call tool with:
+# cd test/ClassRename
+# ../../build/refactorial  -refactor-specification-file=test.yml foo.cpp -- -isystem /usr/include/x86_64-linux-gnu/c++/4.8 -isystem /usr/lib/gcc/x86_64-linux-gnu/4.8/include -x c++
