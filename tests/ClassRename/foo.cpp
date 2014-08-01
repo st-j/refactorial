@@ -3,17 +3,17 @@
 #include <vector>
 
 int C::ElNana::add(int x) {
-  A::Foobar p(x);
+  A::Foo p(x);
   return f.add(p.get());
 }
 
 #define FX(x)   A::Foo x;
 
-typedef std::vector<const A::Foobar*> fvcp;
-typedef std::vector<A::Foobar*> fvp;
+typedef std::vector<const A::Foo*> fvcp;
+typedef std::vector<A::Foo*> fvp;
 
-A::Foobar test(A::Foobar &a) {
-  A::Foobar b = a;
+A::Foo test(A::Foo &a) {
+  A::Foo b = a;
   return b;
 }
 
@@ -22,10 +22,10 @@ int main()
   C::ElNana n;
   std::cout << n.add(10);
 
-  A::Foobar *f = new A::Foobar();
+  A::Foo *f = new A::Foo();
 
-  A::Foobar a;
-  std::vector<A::Foobar> vf;
+  A::Foo a;
+  std::vector<A::Foo> vf;
   vf.push_back(a);
 
   // FX(b);

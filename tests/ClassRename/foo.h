@@ -9,31 +9,31 @@ namespace A {
     virtual ~XY() {}
   };
 
-  class Foobar : public XY {
+  class Foo : public XY {
   protected:
     int x;
   public:
-    Foobar() : x(0) {}
-    Foobar(int px) : x(px) {}
+    Foo() : x(0) {}
+    Foo(int px) : x(px) {}
 
-    virtual ~  Foobar() {
+    virtual ~  Foo() {
 
 
     }
 
-    Foobar getZeroFoo() {
-      return Foobar(0);
+    Foo getZeroFoo() {
+      return Foo(0);
     }
 
-    Foobar *createNewFoo() {
-      return new Foobar(0);
+    Foo *createNewFoo() {
+      return new Foo(0);
     }
 
-    int add(const Foobar& f) {
+    int add(const Foo& f) {
       return x + f.x;
     }
 
-    int sub(Foobar *f) {
+    int sub(Foo *f) {
       return x - f->x;
     }
 
@@ -46,12 +46,12 @@ namespace A {
 namespace B {
   class Blah {
   protected:
-    A::Foobar f;
+    A::Foo f;
   public:
     Blah() : f(0) {}
-    Blah(int x) : f(A::Foobar(x)) {}
-    const A::Foobar* get() { return &f; }
-    void set(A::Foobar p = A::Foobar(5)) {
+    Blah(int x) : f(A::Foo(x)) {}
+    const A::Foo* get() { return &f; }
+    void set(A::Foo p = A::Foo(5)) {
       f = p;
     }
   };
@@ -61,14 +61,14 @@ namespace C {
   using namespace A;
   class ElNana {
   public:
-    Foobar f;
+    Foo f;
     int add(int x);
   };
 
   class ElNada {
-    Foobar *f;
+    Foo *f;
   public:
-    ElNada() : f(new Foobar) {}
+    ElNada() : f(new Foo) {}
     ~ElNada() { delete f; }
   };
 };

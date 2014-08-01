@@ -3,5 +3,5 @@ Transforms:
   TypeRename:
     Types:
       - class A::X: XY
-      - class A::Foo: Foobar
+      - class A::Foobar: Foo
       - class .+::(N.+): El\1
