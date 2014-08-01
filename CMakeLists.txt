@@ -109,3 +109,7 @@ TARGET_LINK_LIBRARIES(refactorial
     ${PCRECPP_LIBRARY}
     dl pthread yaml-cpp
     )
+
+# debug crazy system-header-indlude-problems in linked clang:
+#    echo '#include <stdarg.h> \nint main(){return 0;}' | ~/llvm.install/bin/clang -xc -v -
+# but this class "clang", where the libclang might be different
