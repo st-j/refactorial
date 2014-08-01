@@ -4,12 +4,12 @@
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/AST.h"
+#include <clang/Tooling/Refactoring.h>
 #include <clang/Sema/SemaConsumer.h>
 #include "clang/Frontend/CompilerInstance.h"
 #include "llvm/Support/raw_ostream.h"
 #include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
-#include "Refactoring.h"
 
 #include <iostream>
 #include <fstream>
@@ -17,6 +17,7 @@
 #include <unistd.h>
 
 using namespace clang;
+using namespace clang::tooling;
 using namespace std;
 
 #include "Transforms/Transforms.h"

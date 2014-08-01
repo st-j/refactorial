@@ -11,11 +11,10 @@
 #include <clang/Sema/Sema.h>
 #include <clang/Sema/SemaConsumer.h>
 #include <clang/Tooling/Tooling.h>
+#include <clang/Tooling/Refactoring.h>
 #include <clang/Frontend/CompilerInstance.h>
 #include <llvm/ADT/SmallString.h>
 #include <llvm/Support/FileSystem.h>
-
-#include "Refactoring.h"
 
 #include <yaml-cpp/yaml.h>
 #include "yaml-util.h"
@@ -51,7 +50,7 @@ class TransformRegistry
  public:
 	YAML::Node config;
 	std::map<std::string, std::string> touchedFiles;
-	Replacements *replacements;
+    clang::tooling::Replacements *replacements;
 	
 	static TransformRegistry& get();
 	void add(const std::string &, transform_creator);

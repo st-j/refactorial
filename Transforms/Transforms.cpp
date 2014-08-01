@@ -16,12 +16,12 @@ void Transform::InitializeSema(Sema &s)
 
 void Transform::insert(SourceLocation loc, string text)
 {
-	TransformRegistry::get().replacements->push_back(Replacement(sema->getSourceManager(), CharSourceRange(SourceRange(loc, loc), false), text));
+	TransformRegistry::get().replacements->insert(Replacement(sema->getSourceManager(), CharSourceRange(SourceRange(loc, loc), false), text));
 }
 
 void Transform::replace(SourceRange range, string text)
 {
-	TransformRegistry::get().replacements->push_back(Replacement(sema->getSourceManager(), CharSourceRange(range, true), text));
+	TransformRegistry::get().replacements->insert(Replacement(sema->getSourceManager(), CharSourceRange(range, true), text));
 }
 
 TransformRegistry &TransformRegistry::get()
