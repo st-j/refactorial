@@ -2,5 +2,5 @@
 Transforms:
   FunctionRename:
     Functions:
-      - SampleNameSpace::Foo::wasteCycle: cycleWasteTest
+      - SampleNameSpace::Foo::cycleWasteTest: wasteCycle
       - SampleNameSpace::Foo::get(.+): \1
