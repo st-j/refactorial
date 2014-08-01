@@ -36,8 +36,13 @@ int main(int argc, const char **argv)
     if (refactor_specifications.empty()) {
         config = YAML::LoadAll(std::cin);
     } else {
-        std::ifstream fin; fin.open(refactor_specifications.c_str());
-        config = YAML::LoadAll(fin);
+        std::ifstream fin(refactor_specifications.c_str(), std::ifstream::binary);
+        if (fin) {
+            config = YAML::LoadAll(fin);
+        } else {
+            std::cerr << "barf: cannot open file '" << refactor_specifications << "'\n";
+            exit(-1);
+        }
         fin.close();
     }
 
