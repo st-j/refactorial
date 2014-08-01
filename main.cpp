@@ -2,6 +2,7 @@
 #include <yaml-cpp/yaml.h>
 #include "yaml-util.h"
 
+#include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/AST.h"
 #include <clang/Tooling/Refactoring.h>
@@ -22,45 +23,52 @@ using namespace std;
 
 #include "Transforms/Transforms.h"
 
-int main(int argc, char **argv)
-{	
-	string errorMessage("Could not load compilation database");
+static llvm::cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
+static llvm::cl::opt<std::string> refactor_specifications(
+        llvm::cl::Required, "refactor-specification-file");
 
-	YAML::Node compileCommands = YAML::LoadFile("compile_commands.json");
-	
-	vector<YAML::Node> config = YAML::LoadAll(cin);
-	for(auto configSectionIter = config.begin(); configSectionIter != config.end(); ++configSectionIter)
+int main(int argc, const char **argv)
+{	
+    CommonOptionsParser OptionsParser(argc, argv);
+
+    // read refactoring specification from stdin
+    vector<YAML::Node> config;
+    {
+        std::cerr << "doing : " << refactor_specifications << "\n";
+        std::ifstream fin; fin.open(refactor_specifications.c_str());
+        config = YAML::LoadAll(fin);
+        fin.close();
+    }
+
+    // iterate over refactoring specification
+	for(auto configSectionIter = config.begin();
+            configSectionIter != config.end();
+            ++configSectionIter)
 	{
 		TransformRegistry::get().config = YAML::Node();
+
 		//figure out which files we need to work on
-		YAML::Node& configSection = *configSectionIter;
+		const YAML::Node& configSection = *configSectionIter;
 		vector<string> inputFiles;
 		if(configSection["Files"])
 			inputFiles = configSection["Files"].as<vector<string> >();
-		else
-		{
-			llvm::errs() << "Warning: No files selected. Operating on all files.\n";
-			
-			for(auto iter = compileCommands.begin(); iter != compileCommands.end(); ++iter)
-			{
-				inputFiles.push_back((*iter)["file"].as<string>());
-			}
-		}
-		if(!configSection["Transforms"])
-		{
+		if(!configSection["Transforms"]) {
 			llvm::errs() << "No transforms specified in this configuration section:\n";
 			llvm::errs() << YAML::Dump(configSection) << "\n";
 		}
 		
 		//load up the compilation database
-		llvm::OwningPtr<tooling::CompilationDatabase> Compilations(tooling::CompilationDatabase::loadFromDirectory(".", errorMessage));
-		RefactoringTool rt(*Compilations.take(), inputFiles);
-		
+        if (inputFiles.empty())
+            inputFiles = OptionsParser.GetSourcePathList();
+		RefactoringTool rt(OptionsParser.GetCompilations(), inputFiles);
+
 		TransformRegistry::get().config = configSection["Transforms"];
 		TransformRegistry::get().replacements = &rt.getReplacements();
 		
 		//finally, run
-		for(auto iter = configSection["Transforms"].begin(); iter != configSection["Transforms"].end(); iter++)
+		for(auto iter = configSection["Transforms"].begin();
+                iter != configSection["Transforms"].end();
+                iter++)
 		{
 			
 			llvm::errs() << iter->first.as<string>() +"Transform" << "\n";
