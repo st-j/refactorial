@@ -95,7 +95,6 @@ void FunctionRenameTransform::processDeclContext(DeclContext *DC,
 
       // handle ctor name initializers
       if (auto CD = dyn_cast<CXXConstructorDecl>(D)) {
-        auto BL = CD->getLocation();
         for (auto II = CD->init_begin(), IE = CD->init_end(); II != IE; ++II) {
           if (auto X = (*II)->getInit()) {
             processStmt(X);
