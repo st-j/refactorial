@@ -35,7 +35,7 @@ void TransformRegistry::add(const string &name, transform_creator creator)
 	m_transforms.insert(pair<string, transform_creator>(name, creator));
 }
 
-const transform_creator TransformRegistry::operator[](const string &name) const
+transform_creator TransformRegistry::operator[](const string &name) const
 {
 	auto iter = m_transforms.find(name);
 	if(iter==m_transforms.end())

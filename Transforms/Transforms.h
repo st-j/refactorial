@@ -54,7 +54,7 @@ class TransformRegistry
 	
 	static TransformRegistry& get();
 	void add(const std::string &, transform_creator);
-	const transform_creator operator[](const std::string &name) const;
+	transform_creator operator[](const std::string &name) const;
 };
 
 class TransformRegistration
