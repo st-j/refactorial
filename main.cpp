@@ -13,6 +13,8 @@
 #include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
 
+#include "AugmentedJSONCompilationDatabase.h"
+
 #include <iostream>
 #include <fstream>
 
@@ -42,8 +44,16 @@ int main(int argc, const char **argv)
     llvm::cl::ParseCommandLineOptions(argc, argv);
 
     std::string ErrorMessage;
-    clang::tooling::JSONCompilationDatabase* Compilations = \
-        JSONCompilationDatabase::loadFromFile(BuildPath, ErrorMessage);
+    clang::tooling::AugmentedJSONCompilationDatabase* Compilations = \
+        AugmentedJSONCompilationDatabase::loadFromFile(BuildPath, ErrorMessage);
+
+    std::vector<std::string> appended;
+    appended.push_back("-isystem");
+    appended.push_back("-isystem");
+    appended.push_back("/usr/include/x86_64-linux-gnu/c++/4.8");
+    appended.push_back("-isystem");
+    appended.push_back("/usr/lib/gcc/x86_64-linux-gnu/4.8/include");
+    Compilations->setAppended(appended);
 
     if (!Compilations) {
         llvm::errs() << "barf: could not load '" << BuildPath

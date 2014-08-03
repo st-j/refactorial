@@ -28,6 +28,8 @@ PROJECT (Refactorial)
 # kinda hardcoded by trial-and-error...
 add_definitions("-fno-rtti -Wno-c++11-extensions -Wno-nested-anon-types")
 
+add_definitions("-g")
+
 macro(llvm_get_config OUTPUT)
     execute_process(COMMAND ${LLVM_CONFIG_EXECUTABLE} ${ARGN}
         RESULT_VARIABLE __llvm_ok
@@ -90,6 +92,7 @@ LINK_DIRECTORIES(${LLVM_LIBRARY_DIRS})
 
 ADD_EXECUTABLE(refactorial
     main.cpp
+    AugmentedJSONCompilationDatabase.cpp
     Transforms/AccessorsTransform.cpp
     Transforms/ExtractParameterTransform.cpp
     Transforms/FunctionRenameTransform.cpp
