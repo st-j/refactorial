@@ -25,16 +25,17 @@ using namespace std;
 
 static llvm::cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 static llvm::cl::opt<std::string> refactor_specifications(
-        llvm::cl::Required, "refactor-specification-file");
+        llvm::cl::Optional, "refactor-specification-file");
 
 int main(int argc, const char **argv)
 {	
     CommonOptionsParser OptionsParser(argc, argv);
 
-    // read refactoring specification from stdin
+    // read refactoring specifications. either read from stdin or file
     vector<YAML::Node> config;
-    {
-        std::cerr << "doing : " << refactor_specifications << "\n";
+    if (refactor_specifications.empty()) {
+        config = YAML::LoadAll(std::cin);
+    } else {
         std::ifstream fin; fin.open(refactor_specifications.c_str());
         config = YAML::LoadAll(fin);
         fin.close();
