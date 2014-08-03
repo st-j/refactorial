@@ -9,6 +9,7 @@
 #include <clang/Sema/SemaConsumer.h>
 #include "clang/Frontend/CompilerInstance.h"
 #include "llvm/Support/raw_ostream.h"
+#include <clang/Tooling/JSONCompilationDatabase.h>
 #include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
 
@@ -23,24 +24,47 @@ using namespace std;
 
 #include "Transforms/Transforms.h"
 
-static llvm::cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
+static llvm::cl::opt<bool> Help(
+        "h",
+        llvm::cl::desc("Alias for -help"),
+        llvm::cl::Hidden);
 static llvm::cl::opt<std::string> refactor_specifications(
-        llvm::cl::Optional, "refactor-specification-file");
+        "refactor-specification-file",
+        llvm::cl::desc("file with refactoring information, overrides stdin"),
+        llvm::cl::Optional);
+static llvm::cl::opt<std::string> BuildPath(
+        "p",
+        llvm::cl::desc("path to compile_commands.json"),
+        llvm::cl::Required);
 
 int main(int argc, const char **argv)
-{	
-    CommonOptionsParser OptionsParser(argc, argv);
+{
+    llvm::cl::ParseCommandLineOptions(argc, argv);
+
+    std::string ErrorMessage;
+    clang::tooling::JSONCompilationDatabase* Compilations = \
+        JSONCompilationDatabase::loadFromFile(BuildPath, ErrorMessage);
+
+    std::vector<std::string> additionalCommandLine;
+    additionalCommandLine.push_back("-isystem");
+    additionalCommandLine.push_back("/usr/include/x86_64-linux-gnu/c++/4.8");
+
+    if (!Compilations) {
+        llvm::errs() << "barf " << BuildPath << " " << ErrorMessage << "\n";
+        exit(0);
+    }
 
     // read refactoring specifications. either read from stdin or file
     vector<YAML::Node> config;
     if (refactor_specifications.empty()) {
+        llvm::errs() << "falling back to read from stdin\n";
         config = YAML::LoadAll(std::cin);
     } else {
         std::ifstream fin(refactor_specifications.c_str(), std::ifstream::binary);
         if (fin) {
             config = YAML::LoadAll(fin);
         } else {
-            std::cerr << "barf: cannot open file '" << refactor_specifications << "'\n";
+            llvm::errs() << "barf: cannot open file '" << refactor_specifications << "'\n";
             exit(-1);
         }
         fin.close();
@@ -64,9 +88,29 @@ int main(int argc, const char **argv)
 		}
 		
 		//load up the compilation database
-        if (inputFiles.empty())
-            inputFiles = OptionsParser.GetSourcePathList();
-		RefactoringTool rt(OptionsParser.GetCompilations(), inputFiles);
+        if (inputFiles.empty()) {
+            inputFiles = Compilations->getAllFiles();
+            llvm::errs() << "no input files in refactoring yml given. "
+                << "will use all " << inputFiles.size() << " files "
+                << "from compile_commands.json\n";
+        }
+
+        std::vector<std::string>::iterator kt;
+        for(kt=inputFiles.begin();kt!=inputFiles.end();++kt) {
+
+            std::vector<clang::tooling::CompileCommand> vec = \
+                Compilations->getCompileCommands(*kt);
+            std::vector<clang::tooling::CompileCommand>::iterator it;
+            for(it=vec.begin();it!=vec.end();++it) {
+                std::vector<std::string> cmd = it->CommandLine;
+                std::vector<std::string>::iterator jt;
+                for(jt=cmd.begin();jt!=cmd.end();++jt) {
+                    llvm::errs() << "bla: " << *jt << "\n";
+                }
+            }
+        }
+
+		RefactoringTool rt(*Compilations, inputFiles);
 
 		TransformRegistry::get().config = configSection["Transforms"];
 		TransformRegistry::get().replacements = &rt.getReplacements();
