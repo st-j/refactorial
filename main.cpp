@@ -45,12 +45,9 @@ int main(int argc, const char **argv)
     clang::tooling::JSONCompilationDatabase* Compilations = \
         JSONCompilationDatabase::loadFromFile(BuildPath, ErrorMessage);
 
-    std::vector<std::string> additionalCommandLine;
-    additionalCommandLine.push_back("-isystem");
-    additionalCommandLine.push_back("/usr/include/x86_64-linux-gnu/c++/4.8");
-
     if (!Compilations) {
-        llvm::errs() << "barf " << BuildPath << " " << ErrorMessage << "\n";
+        llvm::errs() << "barf: could not load '" << BuildPath
+            << "' message: '" << ErrorMessage << "'\n";
         exit(0);
     }
 
@@ -95,20 +92,20 @@ int main(int argc, const char **argv)
                 << "from compile_commands.json\n";
         }
 
-        std::vector<std::string>::iterator kt;
-        for(kt=inputFiles.begin();kt!=inputFiles.end();++kt) {
-
-            std::vector<clang::tooling::CompileCommand> vec = \
-                Compilations->getCompileCommands(*kt);
-            std::vector<clang::tooling::CompileCommand>::iterator it;
-            for(it=vec.begin();it!=vec.end();++it) {
-                std::vector<std::string> cmd = it->CommandLine;
-                std::vector<std::string>::iterator jt;
-                for(jt=cmd.begin();jt!=cmd.end();++jt) {
-                    llvm::errs() << "bla: " << *jt << "\n";
-                }
-            }
-        }
+        // for debugging...
+        /* std::vector<std::string>::iterator kt; */
+        /* for(kt=inputFiles.begin();kt!=inputFiles.end();++kt) { */
+        /*     std::vector<clang::tooling::CompileCommand> vec = \ */
+        /*         Compilations->getCompileCommands(*kt); */
+        /*     std::vector<clang::tooling::CompileCommand>::iterator it; */
+        /*     for(it=vec.begin();it!=vec.end();++it) { */
+        /*         std::vector<std::string> cmd = it->CommandLine; */
+        /*         std::vector<std::string>::iterator jt; */
+        /*         for(jt=cmd.begin();jt!=cmd.end();++jt) { */
+        /*             llvm::errs() << "compile_commands: : " << *jt << "\n"; */
+        /*         } */
+        /*     } */
+        /* } */
 
 		RefactoringTool rt(*Compilations, inputFiles);
 
