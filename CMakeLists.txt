@@ -2,6 +2,30 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
 
 PROJECT (Refactorial)
 
+# debian packet dependencies:
+#
+# sudo apt-get install libyaml-cpp-dev clang
+#
+# also need llvm+clang in version 3.2:
+# {{{
+#     export BRANCH=release_32
+#     git clone http://llvm.org/git/llvm.git $HOME/llvm.git --branch $BRANCH
+#     git clone http://llvm.org/git/clang.git $HOME/llvm.git/tools/clang --branch $BRANCH
+#     mkdir -p $HOME/llvm.git/build && cd $HOME/llvm.git/build
+#     cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm.install -DLLVM_TARGETS_TO_BUILD="X86"
+#     make -j`getconf _NPROCESSORS_ONLN` all install
+# }}}
+#
+# compiling with gcc 4.8 seems to break, clang 3.3 works. do the following in your shell:
+# {{{
+#     export CC=clang
+#     export CXX=clang++
+#     mkdir build && cd build
+#     cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+#     make
+# }}}
+
+# kinda hardcoded by trial-and-error...
 add_definitions("-fno-rtti -Wno-c++11-extensions -Wno-nested-anon-types")
 
 macro(llvm_get_config OUTPUT)
@@ -29,10 +53,20 @@ macro(resolve_library_flags VARIABLE)
     set(${VARIABLE}_LIBRARIES ${_${VARIABLE}_LIBRARIES} CACHE INTERNAL "")
 endmacro()
 
-find_program(LLVM_CONFIG_EXECUTABLE NAMES llvm-config PATHS "~/llvm.install/bin")
-message(" -- got llvm-config: ${LLVM_CONFIG_EXECUTABLE}")
+# kinda hardcoded for my case...
+find_program(LLVM_CONFIG_EXECUTABLE
+    NAMES llvm-config
+    PATHS "~/llvm.install/bin"
+    )
+if(${LLVM_CONFIG_EXECUTABLE} MATCHES NOTFOUND)
+    message(FATAL_ERROR " -- could not find llvm-config")
+else()
+    llvm_get_config(LLVM_VERSION "--version")
+    message(" -- got llvm-config: '${LLVM_CONFIG_EXECUTABLE}', version ${LLVM_VERSION}")
+endif(${LLVM_CONFIG_EXECUTABLE} MATCHES NOTFOUND)
 
-# crate this list: make it empty, wait for "undefined reference" errors, note a symbol and call:
+# crate this list: make it empty, wait for "undefined reference" errors, note a
+# symbol and call:
 #   nm -C -A ~/llvm.install/lib/* | grep -e "[rRtT]\s*llvm::MCContext::~MCContext"
 list(APPEND CLANG_LIBRARIES
     clangTooling clangEdit clangDriver
@@ -73,6 +107,5 @@ TARGET_LINK_LIBRARIES(refactorial
     ${LLVM_LIBRARIES}
     ${PCRE_LIBRARY}
     ${PCRECPP_LIBRARY}
-    dl pthread
-    yaml-cpp
+    dl pthread yaml-cpp
     )
