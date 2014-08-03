@@ -97,24 +97,9 @@ int main(int argc, const char **argv)
         if (inputFiles.empty()) {
             inputFiles = Compilations.getAllFiles();
             llvm::errs() << "no input files in refactoring yml given. "
-                << "will use all " << inputFiles.size() << " files "
+                << "using " << inputFiles.size() << " compile units "
                 << "from compile_commands.json\n";
         }
-
-        // for debugging...
-        /* std::vector<std::string>::iterator kt; */
-        /* for(kt=inputFiles.begin();kt!=inputFiles.end();++kt) { */
-        /*     std::vector<clang::tooling::CompileCommand> vec = \ */
-        /*         Compilations->getCompileCommands(*kt); */
-        /*     std::vector<clang::tooling::CompileCommand>::iterator it; */
-        /*     for(it=vec.begin();it!=vec.end();++it) { */
-        /*         std::vector<std::string> cmd = it->CommandLine; */
-        /*         std::vector<std::string>::iterator jt; */
-        /*         for(jt=cmd.begin();jt!=cmd.end();++jt) { */
-        /*             llvm::errs() << "compile_commands: : " << *jt << "\n"; */
-        /*         } */
-        /*     } */
-        /* } */
 
 		RefactoringTool rt(Compilations, inputFiles);
 
@@ -127,7 +112,7 @@ int main(int argc, const char **argv)
                 iter++)
 		{
 			
-			llvm::errs() << iter->first.as<string>() +"Transform" << "\n";
+			llvm::errs() << "Doing a '" << iter->first.as<string>() +"Transform'" << "\n";
 			rt.run(new TransformFactory(TransformRegistry::get()[iter->first.as<string>() + "Transform"]));
 		}
 	}

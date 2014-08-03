@@ -35,7 +35,7 @@ macro(llvm_get_config OUTPUT)
         RESULT_VARIABLE __llvm_ok
         OUTPUT_VARIABLE ${OUTPUT})
     if (NOT __llvm_ok STREQUAL 0)
-        message(FATAL_ERROR "llvm_get_config: failed to execute ${LLVM_CONFIG_EXECUTABLE} ${ARGN} (result: ${__llvm_ok})")
+        message(FATAL_ERROR " -- llvm_get_config: failed to execute ${LLVM_CONFIG_EXECUTABLE} ${ARGN} (result: ${__llvm_ok})")
     endif()
     string(STRIP ${OUTPUT} "${${OUTPUT}}")
     string(REPLACE "\n" "" ${OUTPUT} "${${OUTPUT}}")
@@ -55,21 +55,23 @@ macro(resolve_library_flags VARIABLE)
     set(${VARIABLE}_LIBRARIES ${_${VARIABLE}_LIBRARIES} CACHE INTERNAL "")
 endmacro()
 
-# kinda hardcoded for my case...
+# kinda hardcoded for my setup...
 find_program(LLVM_CONFIG_EXECUTABLE
     NAMES llvm-config
     PATHS "~/llvm.install/bin"
     )
+# check that
 if(${LLVM_CONFIG_EXECUTABLE} MATCHES NOTFOUND)
     message(FATAL_ERROR " -- could not find llvm-config")
 else()
     llvm_get_config(LLVM_VERSION "--version")
-    message(" -- got llvm-config: '${LLVM_CONFIG_EXECUTABLE}', version ${LLVM_VERSION}")
+    message("-- got llvm-config: '${LLVM_CONFIG_EXECUTABLE}', version ${LLVM_VERSION}")
 endif(${LLVM_CONFIG_EXECUTABLE} MATCHES NOTFOUND)
 
 # crate this list: make it empty, wait for "undefined reference" errors, note a
 # symbol and call:
 #   nm -C -A ~/llvm.install/lib/* | grep -e "[rRtT]\s*llvm::MCContext::~MCContext"
+# note: don't link "clang" which is a shared lib. you'll get doubled symbols
 list(APPEND CLANG_LIBRARIES
     clangTooling clangEdit clangDriver
     clangFrontend clangLex clangParse
@@ -83,14 +85,14 @@ llvm_get_config(LLVM_LIBRARY_DIRS "--libdir")
 llvm_get_config(LLVM_LIBRARIES "--libs" support mcparser)
 string(REPLACE " " ";" LLVM_LIBRARIES "${LLVM_LIBRARIES}")
 
-FIND_LIBRARY(PCRE_LIBRARY pcre)
-FIND_LIBRARY(PCRECPP_LIBRARY pcrecpp)
+find_library(PCRE_LIBRARY pcre)
+find_library(PCRECPP_LIBRARY pcrecpp)
 
-ADD_DEFINITIONS(${LLVM_CXXFLAGS})
+add_definitions(${LLVM_CXXFLAGS})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
-LINK_DIRECTORIES(${LLVM_LIBRARY_DIRS})
+link_directories(${LLVM_LIBRARY_DIRS})
 
-ADD_EXECUTABLE(refactorial
+add_executable(refactorial
     main.cpp
     AugmentedJSONCompilationDatabase.cpp
     Transforms/AccessorsTransform.cpp
@@ -105,7 +107,7 @@ ADD_EXECUTABLE(refactorial
     Transforms/TypeRenameTransform.cpp
 )
 
-TARGET_LINK_LIBRARIES(refactorial
+target_link_libraries(refactorial
     ${CLANG_LIBRARIES}
     ${LLVM_LIBRARIES}
     ${PCRE_LIBRARY}
@@ -115,8 +117,4 @@ TARGET_LINK_LIBRARIES(refactorial
 
 # debug crazy system-header-indlude-problems in linked clang:
 #    echo '#include <stdarg.h> \nint main(){return 0;}' | ~/llvm.install/bin/clang -xc -v -
-# but this class "clang", where the libclang might be different
-#
-# call tool with:
-# cd test/ClassRename
-# ../../build/refactorial  -refactor-specification-file=test.yml foo.cpp -- -isystem /usr/include/x86_64-linux-gnu/c++/4.8 -isystem /usr/lib/gcc/x86_64-linux-gnu/4.8/include -x c++
+# but this targets "clang", where the libclang might be different

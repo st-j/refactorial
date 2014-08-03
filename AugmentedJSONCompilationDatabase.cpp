@@ -19,10 +19,19 @@ AugmentedJSONCompilationDatabase::AugmentedJSONCompilationDatabase(
             json_db(json_db)
 {
     if (fixed_db) {
-        std::vector<CompileCommand> cmds = fixed_db->getCompileCommands("");
-        if (cmds.size() != 1)
+        std::vector<CompileCommand> compiles = fixed_db->getCompileCommands("");
+        if (compiles.size() != 1) {
             llvm::errs() << "angry bark!";
-        additional_cmds = cmds.front().CommandLine;
+            exit(-1);
+        }
+
+        // copy all extracted commands, but skip the first element, which holds "clang-tool"
+        const std::vector<std::string>& commands = compiles.front().CommandLine;
+        std::vector<std::string>::const_iterator it;
+        for(it=commands.begin();it!=commands.end();++it) {
+            if (*it != "clang-tool")
+                additional_cmds.push_back(*it);
+        }
     }
 }
 
