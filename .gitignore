@@ -1,24 +1,3 @@
-*~
-
-# Test results
-tests/*/*_out.cpp
-tests/*/*_out.h
-tests/*/*.refactored*
-
-# Built binaries
-*.a
-Build
-
-# CMake generated files
-CMakeCache.txt
-CMakeFiles
-Makefile
-cmake_install.cmake
-install_manifest.txt
+# building and CMake generated files
 compile_commands.json
-
-# refactoring backups
-*.orig
-
-# output
-refactorial
+build
