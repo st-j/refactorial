@@ -8,7 +8,7 @@
 #include <clang/Tooling/Refactoring.h>
 #include <clang/Sema/SemaConsumer.h>
 #include "clang/Frontend/CompilerInstance.h"
-#include "llvm/Support/raw_ostream.h"
+#include <llvm/Support/raw_ostream.h>
 #include <clang/Tooling/JSONCompilationDatabase.h>
 #include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
@@ -41,25 +41,24 @@ static llvm::cl::opt<std::string> BuildPath(
 
 int main(int argc, const char **argv)
 {
+    std::string ErrorMessage;
+
+    clang::tooling::FixedCompilationDatabase* fixed_db = \
+        FixedCompilationDatabase::loadFromCommandLine(argc, argv);
+
     llvm::cl::ParseCommandLineOptions(argc, argv);
 
-    std::string ErrorMessage;
-    clang::tooling::AugmentedJSONCompilationDatabase* Compilations = \
-        AugmentedJSONCompilationDatabase::loadFromFile(BuildPath, ErrorMessage);
+    clang::tooling::JSONCompilationDatabase* json_db = \
+        JSONCompilationDatabase::loadFromFile(BuildPath, ErrorMessage);
 
-    std::vector<std::string> appended;
-    appended.push_back("-isystem");
-    appended.push_back("-isystem");
-    appended.push_back("/usr/include/x86_64-linux-gnu/c++/4.8");
-    appended.push_back("-isystem");
-    appended.push_back("/usr/lib/gcc/x86_64-linux-gnu/4.8/include");
-    Compilations->setAppended(appended);
-
-    if (!Compilations) {
+    if (!json_db) {
         llvm::errs() << "barf: could not load '" << BuildPath
             << "' message: '" << ErrorMessage << "'\n";
         exit(0);
     }
+
+    clang::tooling::AugmentedJSONCompilationDatabase Compilations(
+            json_db, fixed_db);
 
     // read refactoring specifications. either read from stdin or file
     vector<YAML::Node> config;
@@ -96,7 +95,7 @@ int main(int argc, const char **argv)
 		
 		//load up the compilation database
         if (inputFiles.empty()) {
-            inputFiles = Compilations->getAllFiles();
+            inputFiles = Compilations.getAllFiles();
             llvm::errs() << "no input files in refactoring yml given. "
                 << "will use all " << inputFiles.size() << " files "
                 << "from compile_commands.json\n";
@@ -117,7 +116,7 @@ int main(int argc, const char **argv)
         /*     } */
         /* } */
 
-		RefactoringTool rt(*Compilations, inputFiles);
+		RefactoringTool rt(Compilations, inputFiles);
 
 		TransformRegistry::get().config = configSection["Transforms"];
 		TransformRegistry::get().replacements = &rt.getReplacements();

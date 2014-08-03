@@ -26,7 +26,9 @@ refactorial: build/refactorial
 execute: restore_test_dir build/refactorial ${WORKDIR}/build/compile_commands.json
 	./build/refactorial \
 		-refactor-specification-file=${WORKDIR}/ClassRename.yml \
-		-p=${WORKDIR}/build/compile_commands.json
+		-p=${WORKDIR}/build/compile_commands.json -- \
+		-isystem /usr/include/x86_64-linux-gnu/c++/4.8 \
+		-isystem /usr/lib/gcc/x86_64-linux-gnu/4.8/include
 
 try_test_build: execute ${WORKDIR}/build/compile_commands.json
 	${MAKE} -C ${WORKDIR}/build

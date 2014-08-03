@@ -5,24 +5,35 @@
 
 namespace clang {
 namespace tooling {
-    class AugmentedJSONCompilationDatabase : public JSONCompilationDatabase {
+
+    class AugmentedJSONCompilationDatabase : public CompilationDatabase {
 
     private:
-        std::vector<std::string> additionalCommands;
+        JSONCompilationDatabase* json_db;
+
+        std::vector<std::string> additional_cmds;
 
     public:
-        void setAppended(const std::vector<std::string> cmds) {
-            additionalCommands = cmds;
+        AugmentedJSONCompilationDatabase(
+                JSONCompilationDatabase* json_db,
+                FixedCompilationDatabase* fixed_db);
+
+        ~AugmentedJSONCompilationDatabase();
+
+        void setAdditionalCmds(std::vector<std::string> cmds) {
+            additional_cmds = cmds;
         }
-        void addAppended(const std::string cmd) {
-            additionalCommands.push_back(cmd);
+        void setJsonDB(JSONCompilationDatabase* db) {
+            if (json_db)
+                delete json_db;
+            json_db = db;
         }
 
         std::vector<CompileCommand>
-        getCompileCommands(StringRef FilePath) const override;
+            getCompileCommands(StringRef FilePath) const override;
 
-        static AugmentedJSONCompilationDatabase *loadFromFile(
-                StringRef FilePath, std::string &ErrorMessage);
+        std::vector<std::string>
+            getAllFiles() const override;
 
     };
 }
