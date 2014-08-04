@@ -1,6 +1,6 @@
-# expects the name to be a directory inside a valid git repo, on which some
-# tooling is done!  for example UseCase is "$HOME/InPlaceReplace.git/UseCase"
-# is inside one. this one.
+# expects the name to be a directory inside a valid git repo, on
+# which some tooling is done!  for example in
+# "$HOME/refactorial.git/test2"
 WORKDIR=test2
 
 all: \
@@ -30,7 +30,7 @@ execute: restore_test_dir build/refactorial ${WORKDIR}/build/compile_commands.js
 		-isystem /usr/include/x86_64-linux-gnu/c++/4.8 \
 		-isystem /usr/lib/gcc/x86_64-linux-gnu/4.8/include
 
-try_test_build: execute ${WORKDIR}/build/compile_commands.json
+try_test_build: execute
 	${MAKE} -C ${WORKDIR}/build
 
 show_test_diff: try_test_build
