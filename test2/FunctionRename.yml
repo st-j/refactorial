@@ -1,0 +1,6 @@
+---
+Transforms:
+  FunctionRename:
+    Functions:
+      - SampleNameSpace::Foo::cycleWasteTest: wasteCycle
+      - SampleNameSpace::Foo::get(.+): \1

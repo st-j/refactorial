@@ -6,4 +6,5 @@ Project(testProject)
 add_executable(${PROJECT_NAME}
     main.cpp
     ClassRename.cpp
+    FunctionRename.cpp
     )

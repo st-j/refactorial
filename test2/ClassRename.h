@@ -1,5 +1,5 @@
-#ifndef FOO_H
-#define FOO_H
+#ifndef CLASS_RENAME_H
+#define CLASS_RENAME_H
 
 #include <iostream>
 
@@ -79,4 +79,5 @@ namespace C {
   };
 };
 
-#endif /*FOO_H*/
+#endif /*CLASS_RENAME_H*/
+
