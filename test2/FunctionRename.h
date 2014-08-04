@@ -1,6 +1,8 @@
 #ifndef FUNCTION_RENAME_H
 #define FUNCTION_RENAME_H
 
+#include "ClassRename.h"
+
 namespace SampleNameSpace {
   class Foo {
   private:
@@ -12,6 +14,8 @@ namespace SampleNameSpace {
     Foo() : x(0), next(0), ownsNext(false) {}
     Foo(Foo *n) : x(0), next(n), ownsNext(false) {}
     Foo(int px) : x(px), next(new Foo()), ownsNext(true) {}
+
+    A::Foo convoluted_member_variable;
 
     ~Foo() {
       if (ownsNext) {
