@@ -146,10 +146,12 @@ foreach(YAML_FILE ${ALL_TEST_YAMLS})
             -isystem /usr/lib/gcc/x86_64-linux-gnu/4.8/include
         COMMAND git add -u .
         COMMAND git commit -m "automatic commit: refactorial vs. ${YAML_NAME}"
+        COMMAND make -C build
         COMMAND git checkout -
         WORKING_DIRECTORY ${TEST_DIRECTORY}
         DEPENDS refactorial
         )
+
 
     add_dependencies(all-tests-refactorings test-refactor-${YAML_NAME})
 
