@@ -118,3 +118,39 @@ target_link_libraries(refactorial
 # debug crazy system-header-indlude-problems in linked clang:
 #    echo '#include <stdarg.h> \nint main(){return 0;}' | ~/llvm.install/bin/clang -xc -v -
 # but this targets "clang", where the libclang might be different
+#
+
+add_custom_target(all-tests-refactorings)
+
+# great power: can also be outside of this cmake's tree!
+#set(TEST_DIRECTORY $ENV{HOME}/test_project)
+set(TEST_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test2)
+
+file(GLOB ALL_TEST_YAMLS "${TEST_DIRECTORY}/*.yml")
+
+foreach(YAML_FILE ${ALL_TEST_YAMLS})
+
+    get_filename_component(YAML_NAME ${YAML_FILE} NAME_WE)
+
+    # create a local build-dir with compile-commands, create a local branch
+    # (!), call the tool to make the changes, and create a commit
+    add_custom_target(test-refactor-${YAML_NAME}
+        COMMAND mkdir -p build && cd build && cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+        COMMAND git checkout -- .
+        COMMAND git branch -f test-refactor-${YAML_NAME}
+        COMMAND git checkout test-refactor-${YAML_NAME}
+        COMMAND ${CMAKE_BINARY_DIR}/refactorial 
+            -refactor-specification-file=${YAML_FILE}
+            -p=${TEST_DIRECTORY}/build/compile_commands.json --
+            -isystem /usr/include/x86_64-linux-gnu/c++/4.8
+            -isystem /usr/lib/gcc/x86_64-linux-gnu/4.8/include
+        COMMAND git add -u .
+        COMMAND git commit -m "automatic commit: refactorial vs. ${YAML_NAME}"
+        COMMAND git checkout -
+        WORKING_DIRECTORY ${TEST_DIRECTORY}
+        DEPENDS refactorial
+        )
+
+    add_dependencies(all-tests-refactorings test-refactor-${YAML_NAME})
+
+endforeach(YAML_FILE)
