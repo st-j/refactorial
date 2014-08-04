@@ -1,6 +1,5 @@
 
 #include <yaml-cpp/yaml.h>
-#include "yaml-util.h"
 
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "clang/AST/ASTConsumer.h"
