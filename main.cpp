@@ -112,7 +112,7 @@ int main(int argc, const char **argv)
 		{
 			
 			llvm::errs() << "Doing a '" << iter->first.as<string>() +"Transform'" << "\n";
-			rt.run(new TransformFactory(TransformRegistry::get()[iter->first.as<string>() + "Transform"]));
+			rt.runAndSave(new TransformFactory(TransformRegistry::get()[iter->first.as<string>() + "Transform"]));
 		}
 	}
 	return 0;
