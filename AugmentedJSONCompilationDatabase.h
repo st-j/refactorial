@@ -32,9 +32,11 @@ namespace tooling {
         std::vector<CompileCommand>
             getCompileCommands(StringRef FilePath) const override;
 
+        std::vector<CompileCommand>
+            getAllCompileCommands() const override;
+
         std::vector<std::string>
             getAllFiles() const override;
-
     };
 }
 }

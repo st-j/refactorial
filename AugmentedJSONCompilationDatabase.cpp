@@ -57,7 +57,21 @@ AugmentedJSONCompilationDatabase::getCompileCommands(StringRef FilePath) const
     }
 
     return retval;
-};
+}
+
+std::vector<CompileCommand>
+AugmentedJSONCompilationDatabase::getAllCompileCommands() const
+{
+    std::vector<CompileCommand> retval = json_db->getAllCompileCommands();
+    for(auto &cmd : retval) {
+        cmd.CommandLine.insert(
+                cmd.CommandLine.end(),
+                additional_cmds.begin(),
+                additional_cmds.end());
+    }
+
+    return retval;
+}
 
 std::vector<std::string>
 AugmentedJSONCompilationDatabase::getAllFiles() const
