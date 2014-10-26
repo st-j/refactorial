@@ -179,10 +179,9 @@ void MethodMoveTransform::collectNamespaceInfo(DeclContext *DC,
 	// but apparently class Foo is already using namespace B; this will cause
 	// some problem for our namespace replication
   
-	for (auto UI = DC->using_directives_begin(),
-		     UE = DC->using_directives_end(); UI != UE; ++UI) {
+	for (auto UI : DC->using_directives()) {
   
-		auto UDLS = (*UI)->getLocStart();
+		auto UDLS = UI->getLocStart();
 		if (!sema->getSourceManager().isWrittenInSameFile(EL, UDLS)) {
 			continue;
 		}
@@ -191,7 +190,7 @@ void MethodMoveTransform::collectNamespaceInfo(DeclContext *DC,
 			continue;
 		}
          
-		auto ND = (*UI)->getNominatedNamespaceAsWritten();
+		auto ND = UI->getNominatedNamespaceAsWritten();
 		auto N = ND->getNameAsString();
     
 		outHeader += "using namespace ";
@@ -207,7 +206,7 @@ std::string MethodMoveTransform::rewriteMethodInHeader(CXXMethodDecl *M)
   
 	// return type (but no type if ctor or dtor)
 	if (!isa<CXXConstructorDecl>(M) && !isa<CXXDestructorDecl>(M)) {
-		sst << M->getResultType().getAsString();
+		sst << M->getReturnType().getAsString();
 		sst << " ";
 	}
 

@@ -40,7 +40,7 @@ project "refactorial"
         "clangSema",
         "clangAnalysis",
         "clangEdit",
-        "clangRewriteCore",
+        "clangRewrite",
         "clangDriver",
         "clangAST",
         "clangASTMatchers",

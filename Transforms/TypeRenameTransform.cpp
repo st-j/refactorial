@@ -212,7 +212,7 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
     }
     else if (auto D = dyn_cast<ObjCMethodDecl>(*I)) {
       // if no type source info, it's a void f(void) function
-      auto TSI = D->getResultTypeSourceInfo();
+      auto TSI = D->getReturnTypeSourceInfo();
       if (TSI) {      
         processTypeLoc(TSI->getTypeLoc());
       }
@@ -512,8 +512,8 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
     case TypeLoc::FunctionProto:
     {
       if (auto FTL = TL.getAs<FunctionTypeLoc>()) {
-        for (unsigned I = 0, E = FTL.getNumArgs(); I != E; ++I) {
-          processParmVarDecl(FTL.getArg(I));
+        for (unsigned I = 0, E = FTL.getNumParams(); I != E; ++I) {
+          processParmVarDecl(FTL.getParam(I));
         }
       }
       break;
