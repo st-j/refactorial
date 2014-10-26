@@ -120,7 +120,7 @@ void MethodMoveTransform::processCXXRecordDecl(CXXRecordDecl *CRD)
 		// is the inline def outside of the record body? if not, skip
 		// this also requires the check whether both are from the same file
 		auto SLS = S->getLocStart();
-		if (!sema->getSourceManager().isFromSameFile(CRDRBL, SLS)) {
+		if (!sema->getSourceManager().isWrittenInSameFile(CRDRBL, SLS)) {
 			continue;
 		}
       
@@ -183,7 +183,7 @@ void MethodMoveTransform::collectNamespaceInfo(DeclContext *DC,
 		     UE = DC->using_directives_end(); UI != UE; ++UI) {
   
 		auto UDLS = (*UI)->getLocStart();
-		if (!sema->getSourceManager().isFromSameFile(EL, UDLS)) {
+		if (!sema->getSourceManager().isWrittenInSameFile(EL, UDLS)) {
 			continue;
 		}
     
