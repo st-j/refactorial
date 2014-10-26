@@ -130,7 +130,7 @@ protected:
       auto KN = T->getKindName();
       assert(KN && "getKindName() must return a non-NULL value");
       QN.insert(0, KN);
-      QN.insert(strlen(KN), " ");
+      QN.insert(KN.size(), " ");
     }
     
     for (auto I = renameList.begin(), E = renameList.end(); I != E; ++I) {
