@@ -3,32 +3,29 @@ local function runcmd(cmd)
     return s
 end
 
+local llvm_version
+
 solution "refactorial"
 targetdir   (_WORKING_DIR)
 location    (_WORKING_DIR)
 
 configurations { "Debug", "Release" }
-    flags { "NoRTTI" }
+    flags { "ExtraWarnings", "FatalWarnings", "NoRTTI" }
 
 configuration "Release"
     defines { "NDEBUG" }
     flags { "Optimize" }
 
 configuration {"linux", "gmake"}
-    buildoptions { "-std=c++11", "-pedantic", "-Wno-long-long" }
+    buildoptions { "-std=c++11", "-pedantic" }
     buildoptions { runcmd("llvm-config --cppflags") }
     includedirs { runcmd("llvm-config --includedir") }
     libdirs { runcmd("llvm-config --libdir") }
     linkoptions { runcmd("llvm-config --ldflags") }
+    llvm_version = runcmd("llvm-config --version")
 configuration {}
 
-configuration "vs*"
-    buildoptions { "/Za", "/Ze" }
-configuration{}
-
 platforms { "native", "x32", "x64" }
-
-local libdeps = 
 
 project "refactorial"
     includedirs "./"
@@ -49,7 +46,7 @@ project "refactorial"
         "clangASTMatchers",
         "clangLex",
         "clangBasic",
-        "LLVM-3.4",
+        "LLVM-"..llvm_version,
         "yaml-cpp",
         "pcrecpp"
     }
