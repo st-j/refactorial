@@ -219,7 +219,6 @@ std::string MethodMoveTransform::rewriteMethodInHeader(CXXMethodDecl *M)
 	// parameter list
 	auto PI = M->param_begin();
 	auto PE = M->param_end();
-	auto LPE = PI;
 
 	sst << "(";
   
@@ -244,8 +243,6 @@ std::string MethodMoveTransform::rewriteMethodInHeader(CXXMethodDecl *M)
 			sst << PN;
 		}
 
-		// keep track of the last param
-		LPE = PI;
 		++PI;
 		if (PI != PE) {
 			sst << ", ";
