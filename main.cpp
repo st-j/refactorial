@@ -76,14 +76,10 @@ int main(int argc, const char **argv)
     }
 
     // iterate over refactoring specification
-	for(auto configSectionIter = config.begin();
-            configSectionIter != config.end();
-            ++configSectionIter)
-	{
+	for(const YAML::Node &configSection : config) {
 		TransformRegistry::get().config = YAML::Node();
 
 		//figure out which files we need to work on
-		const YAML::Node& configSection = *configSectionIter;
 		vector<string> inputFiles;
 		if(configSection["Files"])
 			inputFiles = configSection["Files"].as<vector<string> >();
@@ -106,13 +102,9 @@ int main(int argc, const char **argv)
 		TransformRegistry::get().replacements = &rt.getReplacements();
 		
 		//finally, run
-		for(auto iter = configSection["Transforms"].begin();
-                iter != configSection["Transforms"].end();
-                iter++)
-		{
-			
-			llvm::errs() << "Doing a '" << iter->first.as<string>() +"Transform'" << "\n";
-			rt.runAndSave(new TransformFactory(TransformRegistry::get()[iter->first.as<string>() + "Transform"]));
+		for(auto &trans : configSection["Transforms"]) {
+			llvm::errs() << "Doing a '" << trans.first.as<string>() +"Transform'" << "\n";
+			rt.run(new TransformFactory(TransformRegistry::get()[trans.first.as<string>() + "Transform"]));
 		}
 	}
 	return 0;
