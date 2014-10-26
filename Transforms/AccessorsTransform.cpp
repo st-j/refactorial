@@ -193,7 +193,7 @@ public:
 					bool onlyStmt = top_stmt_within_compound == top_stmt_or_compound;
 					bool onlyExpr = un_op == top_stmt_within_compound;
 					
-					bool needToInsertBraces = false, needToInsertParentBraces = false;
+					bool needToInsertBraces = false;
 					if( const IfStmt *if_stmt = dyn_cast<IfStmt>(PM.getParent(top_stmt_or_compound)) )
 					{
 						if(if_stmt->getThen() == top_stmt_or_compound
@@ -230,8 +230,6 @@ public:
 								assert(un_op->isPostfix());
 								insert(if_stmt->getLocEnd(), incrStmt);
 							}
-							if(onlyStmt)
-								needToInsertParentBraces = true;
 						}
 					}
 					else if( const ForStmt *for_stmt = dyn_cast<ForStmt>(PM.getParent(top_stmt_or_compound)) )

@@ -9,9 +9,8 @@
 
 #include "Transforms.h"
 #include "RenameTransforms.h"
+#include <clang/AST/AST.h>
 #include <clang/AST/DeclFriend.h>
-#include <clang/AST/DeclTemplate.h>
-#include <clang/AST/TypeLoc.h>
 
 using namespace clang;
 
