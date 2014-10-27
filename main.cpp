@@ -1,62 +1,25 @@
-
 #include <yaml-cpp/yaml.h>
 
-#include "clang/Tooling/CommonOptionsParser.h"
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/AST.h"
+#include <clang/Tooling/CommonOptionsParser.h>
 #include <clang/Tooling/Refactoring.h>
-#include <clang/Sema/SemaConsumer.h>
-#include "clang/Frontend/CompilerInstance.h"
-#include <llvm/Support/raw_ostream.h>
-#include <clang/Tooling/JSONCompilationDatabase.h>
-#include <clang/Tooling/CompilationDatabase.h>
 #include <clang/Tooling/Tooling.h>
-
-#include "AugmentedJSONCompilationDatabase.h"
 
 #include <iostream>
 #include <fstream>
-
-#include <unistd.h>
 
 using namespace clang;
 using namespace clang::tooling;
 
 #include "Transforms/Transforms.h"
 
-static llvm::cl::opt<bool> Help(
-        "h",
-        llvm::cl::desc("Alias for -help"),
-        llvm::cl::Hidden);
 static llvm::cl::opt<std::string> refactor_specifications(
-        "refactor-specification-file",
+        "rulespec",
         llvm::cl::desc("file with refactoring information, overrides stdin"),
         llvm::cl::Optional);
-static llvm::cl::opt<std::string> BuildPath(
-        "p",
-        llvm::cl::desc("path to compile_commands.json"),
-        llvm::cl::Required);
 
 int main(int argc, const char **argv)
 {
-    std::string ErrorMessage;
-
-    clang::tooling::FixedCompilationDatabase* fixed_db = \
-        FixedCompilationDatabase::loadFromCommandLine(argc, argv);
-
-    llvm::cl::ParseCommandLineOptions(argc, argv);
-
-    clang::tooling::JSONCompilationDatabase* json_db = \
-        JSONCompilationDatabase::loadFromFile(BuildPath, ErrorMessage);
-
-    if (!json_db) {
-        llvm::errs() << "barf: could not load '" << BuildPath
-            << "' message: '" << ErrorMessage << "'\n";
-        exit(0);
-    }
-
-    clang::tooling::AugmentedJSONCompilationDatabase Compilations(
-            json_db, fixed_db);
+    CommonOptionsParser cmdl(argc, argv);
 
     // read refactoring specifications. either read from stdin or file
     std::vector<YAML::Node> config;
@@ -74,11 +37,17 @@ int main(int argc, const char **argv)
         fin.close();
     }
 
-    // iterate over refactoring specification
+	RefactoringTool rt(cmdl.getCompilations(), cmdl.getSourcePathList());
+
+	IgnoringDiagConsumer ignore;
+	rt.setDiagnosticConsumer(&ignore);
+
+	// iterate over refactoring specification
 	for(const YAML::Node &configSection : config) {
 		TransformRegistry::get().config = YAML::Node();
 
 		//figure out which files we need to work on
+		/*
 		std::vector<std::string> inputFiles;
 		if(configSection["Files"])
 			inputFiles = configSection["Files"].as<std::vector<std::string> >();
@@ -94,8 +63,8 @@ int main(int argc, const char **argv)
                 << "using " << inputFiles.size() << " compile units "
                 << "from compile_commands.json\n";
         }
+		*/
 
-		RefactoringTool rt(Compilations, inputFiles);
 
 		TransformRegistry::get().config = configSection["Transforms"];
 		TransformRegistry::get().replacements = &rt.getReplacements();
