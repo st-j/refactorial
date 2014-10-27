@@ -2,7 +2,7 @@
 // RecordFieldRenameTransform.cpp
 //
 
-#include "RenameTransforms.h"
+#include "renamebase.h"
 
 using namespace clang;
 

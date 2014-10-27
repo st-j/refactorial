@@ -8,7 +8,7 @@
 // * No Y, Z part for @implementation X (C) : Y <Z> -- perhaps you shouldn't
 
 #include "Transforms.h"
-#include "RenameTransforms.h"
+#include "renamebase.h"
 #include <clang/AST/AST.h>
 #include <clang/AST/DeclFriend.h>
 
