@@ -21,7 +21,6 @@
 
 using namespace clang;
 using namespace clang::tooling;
-using namespace std;
 
 #include "Transforms/Transforms.h"
 
@@ -60,7 +59,7 @@ int main(int argc, const char **argv)
             json_db, fixed_db);
 
     // read refactoring specifications. either read from stdin or file
-    vector<YAML::Node> config;
+    std::vector<YAML::Node> config;
     if (refactor_specifications.empty()) {
         llvm::errs() << "falling back to read from stdin\n";
         config = YAML::LoadAll(std::cin);
@@ -80,9 +79,9 @@ int main(int argc, const char **argv)
 		TransformRegistry::get().config = YAML::Node();
 
 		//figure out which files we need to work on
-		vector<string> inputFiles;
+		std::vector<std::string> inputFiles;
 		if(configSection["Files"])
-			inputFiles = configSection["Files"].as<vector<string> >();
+			inputFiles = configSection["Files"].as<std::vector<std::string> >();
 		if(!configSection["Transforms"]) {
 			llvm::errs() << "No transforms specified in this configuration section:\n";
 			llvm::errs() << YAML::Dump(configSection) << "\n";
@@ -103,8 +102,8 @@ int main(int argc, const char **argv)
 		
 		//finally, run
 		for(auto &trans : configSection["Transforms"]) {
-			llvm::errs() << "Doing a '" << trans.first.as<string>() +"Transform'" << "\n";
-			rt.run(new TransformFactory(TransformRegistry::get()[trans.first.as<string>() + "Transform"]));
+			llvm::errs() << "Doing a '" << trans.first.as<std::string>() +"Transform'" << "\n";
+			rt.runAndSave(new TransformFactory(TransformRegistry::get()[trans.first.as<std::string>() + "Transform"]));
 		}
 	}
 	return 0;
