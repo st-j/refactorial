@@ -10,11 +10,11 @@ using namespace clang;
 class FunctionRenameTransform : public RenameTransform {
 public:
   virtual void HandleTranslationUnit(ASTContext &);
-  
-  
+
+
 protected:
   void collectAndRenameFunctionDecl(DeclContext *DC, bool topLevel = false);
-  void processDeclContext(DeclContext *DC, bool topLevel = false);  
+  void processDeclContext(DeclContext *DC, bool topLevel = false);
   void processStmt(Stmt *S);
 };
 
@@ -40,16 +40,16 @@ void FunctionRenameTransform::collectAndRenameFunctionDecl(DeclContext *DC,
   // we cas skip any location that is not in b.cpp
 
   pushIndent();
-  
+
   for(auto I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
     auto L = (*I)->getLocation();
     if (topLevel && shouldIgnore(L)) {
       continue;
     }
-    
+
     if (auto D = dyn_cast<FunctionDecl>(*I)) {
       // TODO: If it's a ctor/dtor, it's an error
-      
+
       std::string newName;
       if (nameMatches(D, newName)) {
         renameLocation(D->getLocation(), newName);
@@ -67,19 +67,19 @@ void FunctionRenameTransform::collectAndRenameFunctionDecl(DeclContext *DC,
       }
       popIndent();
     }
-    
-    // descend into the next level (namespace, etc.)    
+
+    // descend into the next level (namespace, etc.)
     if (auto innerDC = dyn_cast<DeclContext>(*I)) {
       collectAndRenameFunctionDecl(innerDC);
     }
   }
-  popIndent();  
+  popIndent();
 }
 
 
 void FunctionRenameTransform::processDeclContext(DeclContext *DC,
                                                  bool topLevel)
-{  
+{
   // TODO: ignore system headers (/usr, /opt, /System and /Library)
   // TODO: Skip globally touched locations
   //
@@ -88,7 +88,7 @@ void FunctionRenameTransform::processDeclContext(DeclContext *DC,
   //
 
   pushIndent();
-  
+
   for(auto I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
     if (auto D = dyn_cast<FunctionDecl>(*I)) {
       // TODO: If it's a ctor/dtor, it's an error
@@ -101,14 +101,14 @@ void FunctionRenameTransform::processDeclContext(DeclContext *DC,
           }
         }
       }
-      
+
       // rename the params' types
       for (auto PI = D->param_begin(), PE = D->param_end(); PI != PE; ++PI) {
         if ((*PI)->hasInit()) {
           processStmt((*PI)->getInit());
-        }  
+        }
       }
-      
+
       // handle body
       if (auto B = D->getBody()) {
         if (stmtInSameFileAsDecl(B, D)) {
@@ -130,11 +130,11 @@ void FunctionRenameTransform::processDeclContext(DeclContext *DC,
         }
       }
     }
-    
+
     // TODO: Handle ObjC interface/impl, inheritance, protocol
     // TODO: Whether we should support category rename?
 
-    // descend into the next level (namespace, etc.)    
+    // descend into the next level (namespace, etc.)
     if (auto innerDC = dyn_cast<DeclContext>(*I)) {
       processDeclContext(innerDC);
     }
@@ -177,6 +177,6 @@ void FunctionRenameTransform::processStmt(Stmt *S)
   for (auto I = S->child_begin(), E = S->child_end(); I != E; ++I) {
     processStmt(*I);
   }
-  
+
   popIndent();
 }

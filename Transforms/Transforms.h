@@ -51,7 +51,7 @@ class TransformRegistry
 	YAML::Node config;
 	std::map<std::string, std::string> touchedFiles;
     clang::tooling::Replacements *replacements;
-	
+
 	static TransformRegistry& get();
 	void add(const std::string &, transform_creator);
 	transform_creator operator[](const std::string &name) const;

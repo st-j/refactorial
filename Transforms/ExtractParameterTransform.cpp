@@ -7,18 +7,18 @@ using namespace std;
 
 
 class ExtractParameterTransform : public Transform {
-public:  
+public:
 	virtual void HandleTranslationUnit(ASTContext &C);
-	
-  
+
+
 protected:
-	
+
 	string extractMethodName;
 	string extractVariableName;
 	string extractDefaultValue;
 
 	map<const FunctionDecl*, list<const VarDecl*> > rewrites;
-  
+
 	void collectDeclContext(const DeclContext *DC);
 	void collectFunction(const FunctionDecl *FN);
 
@@ -27,7 +27,7 @@ protected:
 };
 
 REGISTER_TRANSFORM(ExtractParameterTransform);
-  
+
 void ExtractParameterTransform::HandleTranslationUnit(ASTContext &C)
 {
 	auto extractSpec = TransformRegistry::get().config["ExtractParameter"].begin();
@@ -40,9 +40,9 @@ void ExtractParameterTransform::HandleTranslationUnit(ASTContext &C)
 	collectDeclContext(C.getTranslationUnitDecl());
 	process();
 }
-  
+
 void ExtractParameterTransform::collectDeclContext(const DeclContext *DC)
-{  
+{
 	for(auto I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
 		if (auto innerFN = dyn_cast<FunctionDecl>(*I))
 		{
@@ -129,7 +129,7 @@ void ExtractParameterTransform::removeDecl(const Stmt *stmt, const VarDecl *decl
 				if(*test_decl == decl)
 				{
 					SourceRange rangeToRemove = decl->getSourceRange();
-					
+
 					if(DGR.isSingleDecl())
 					{
 						rangeToRemove.setEnd(findLocAfterSemi(rangeToRemove.getEnd()));
@@ -149,7 +149,7 @@ void ExtractParameterTransform::removeDecl(const Stmt *stmt, const VarDecl *decl
 							rangeToRemove.setBegin(getLocForEndOfToken((decl-1)->getSourceRange().getEnd()));
 						}
 					}
-					
+
 					replace(rangeToRemove, " ");
 				}
 			}

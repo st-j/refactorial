@@ -17,23 +17,23 @@ using namespace clang;
 class TypeRenameTransform : public RenameTransform {
 public:
   virtual void HandleTranslationUnit(ASTContext &C);
-  
+
 protected:
   void collectRenameDecls(DeclContext *DC, bool topLevel = false);
-  void processDeclContext(DeclContext *DC, bool topLevel = false);  
+  void processDeclContext(DeclContext *DC, bool topLevel = false);
   void processStmt(Stmt *S);
   void processCXXRecordDecl(CXXRecordDecl *D);
-  
+
   // forceRewriteMacro is needed to handle expressions like VAArgExpr
   // TODO: be smart, if TL is not within a marco, it's do-able
   void processFunctionDecl(FunctionDecl *D);
   void processTypeLoc(TypeLoc TL, bool forceRewriteMacro = true);
-  
+
   void processQualifierLoc(NestedNameSpecifierLoc NNSL,
                            bool forceRewriteMacro = false);
   void processParmVarDecl(ParmVarDecl *P);
   bool tagNameMatches(TagDecl *T);
-  
+
 private:
   // a quick way to get the whole TypeLocClass tree
   static std::string typeLocClassName(TypeLoc::TypeLocClass C) {
@@ -52,9 +52,9 @@ private:
         sst << "Qualified";
         break;
     }
-    
+
     sst << "(" << C << ")";
-    
+
     return sst.str();
   }
 };
@@ -81,12 +81,12 @@ void TypeRenameTransform::collectRenameDecls(DeclContext *DC, bool topLevel)
   // if a.cpp and b.cpp both include c.h, then once a.cpp is processed,
   // we cas skip any location that is not in b.cpp
   //
-  
+
   pushIndent();
-  
+
   for(auto I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
     auto L = (*I)->getLocation();
-    
+
     if (auto TD = dyn_cast<TagDecl>(*I)) {
       std::string newName;
       if (nameMatches(TD, newName)) {
@@ -99,7 +99,7 @@ void TypeRenameTransform::collectRenameDecls(DeclContext *DC, bool topLevel)
       std::string newName;
       if (nameMatches(D, newName)) {
         renameLocation(L, newName);
-      }      
+      }
     }
     else if (auto D = dyn_cast<TypedefDecl>(*I)) {
       // typedef T n -- we want to see first if it's n that needs renaming
@@ -115,17 +115,17 @@ void TypeRenameTransform::collectRenameDecls(DeclContext *DC, bool topLevel)
         if (nameMatches(RD, newName)) {
           renameLocation(L, newName);
         }
-        
+
         collectRenameDecls(RD);
       }
     }
 
-    // descend into the next level (namespace, etc.)    
+    // descend into the next level (namespace, etc.)
     if (auto innerDC = dyn_cast<DeclContext>(*I)) {
       collectRenameDecls(innerDC);
     }
   }
-  popIndent();  
+  popIndent();
 }
 
 void TypeRenameTransform::processCXXRecordDecl(CXXRecordDecl *D)
@@ -147,7 +147,7 @@ void TypeRenameTransform::processCXXRecordDecl(CXXRecordDecl *D)
 }
 
 void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
-{  
+{
   // TODO: Skip globally touched locations
   //
   // if a.cpp and b.cpp both include c.h, then once a.cpp is processed,
@@ -155,13 +155,13 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
   //
 
   pushIndent();
-  
+
   for(auto I = DC->decls_begin(), E = DC->decls_end(); I != E; ++I) {
     auto L = (*I)->getLocation();
     if (topLevel && shouldIgnore(L)) {
       continue;
     }
-    
+
     // llvm::errs() << indent() << (*I)->getDeclKindName() << ", at: " << loc(L) << "\n";
 
     if (auto D = dyn_cast<ClassTemplateDecl>(*I)) {
@@ -181,10 +181,10 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
     }
     else if (auto D = dyn_cast<FunctionTemplateDecl>(*I)) {
       processFunctionDecl(D->getTemplatedDecl());
-      
+
       // we need to descend on our own
       processDeclContext(D->getTemplatedDecl());
-    }    
+    }
     else if (auto D = dyn_cast<FunctionDecl>(*I)) {
       processFunctionDecl(D);
     }
@@ -192,9 +192,9 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
       if (auto TSI = D->getTypeSourceInfo()) {
         processTypeLoc(TSI->getTypeLoc());
       }
-      
-      processQualifierLoc(D->getQualifierLoc());      
-      
+
+      processQualifierLoc(D->getQualifierLoc());
+
       if (D->hasInit()) {
         processStmt(D->getInit());
       }
@@ -203,8 +203,8 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
       if (auto TSI = D->getTypeSourceInfo()) {
         processTypeLoc(TSI->getTypeLoc());
       }
-      
-      processQualifierLoc(D->getQualifierLoc());      
+
+      processQualifierLoc(D->getQualifierLoc());
     }
     else if (auto D = dyn_cast<TypedefDecl>(*I)) {
       // typedef T n, handle the case of T
@@ -215,14 +215,14 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
     else if (auto D = dyn_cast<ObjCMethodDecl>(*I)) {
       // if no type source info, it's a void f(void) function
       auto TSI = D->getResultTypeSourceInfo();
-      if (TSI) {      
+      if (TSI) {
         processTypeLoc(TSI->getTypeLoc());
       }
 
-      for (auto PI = D->param_begin(), PE = D->param_end(); PI != PE; ++PI) {        
+      for (auto PI = D->param_begin(), PE = D->param_end(); PI != PE; ++PI) {
         processParmVarDecl(*PI);
       }
-      
+
       // handle body
       if (auto B = D->getBody()) {
         if (stmtInSameFileAsDecl(B, D)) {
@@ -235,7 +235,7 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
         processTypeLoc(TSI->getTypeLoc());
       }
     }
-    
+
 #define FIX_PROTOCOL(D) do { \
     std::string newName; \
     auto PLI = D->protocol_loc_begin(); \
@@ -250,14 +250,14 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
       ++PLI; \
     } \
   } while(0)
-  
+
     else if (auto D = dyn_cast<ObjCCategoryDecl>(*I)) {
       // fix class name
       std::string newName;
       if (nameMatches(D->getClassInterface(), newName, true)) {
         renameLocation(D->getLocation(), newName);
       }
-            
+
       // fix protocols
       FIX_PROTOCOL(D);
     }
@@ -268,23 +268,23 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
       if (nameMatches(SC, newName, true)) {
         renameLocation(D->getSuperClassLoc(), newName);
       }
-     
+
       // fix protocols
-      FIX_PROTOCOL(D);      
+      FIX_PROTOCOL(D);
     }
     else if (auto D = dyn_cast<ObjCProtocolDecl>(*I)) {
       // fix protocols
-      FIX_PROTOCOL(D);      
+      FIX_PROTOCOL(D);
     }
     else if (auto D = dyn_cast<ObjCImplDecl>(*I)) {
       // fix class name
       std::string newName;
       if (nameMatches(D->getClassInterface(), newName, true)) {
         renameLocation(D->getLocation(), newName);
-      }      
+      }
     }
 
-    // descend into the next level (namespace, etc.)    
+    // descend into the next level (namespace, etc.)
     if (auto innerDC = dyn_cast<DeclContext>(*I)) {
       processDeclContext(innerDC);
     }
@@ -297,10 +297,10 @@ void TypeRenameTransform::processStmt(Stmt *S)
   if (!S) {
     return;
   }
-  
+
   pushIndent();
   // llvm::errs() << indent() << "Stmt: " << S->getStmtClassName() << ", at: "<< loc(S->getLocStart()) << "\n";
-  
+
   if (auto CE = dyn_cast<CallExpr>(S)) {
     auto D = CE->getCalleeDecl();
     if (D) {
@@ -309,7 +309,7 @@ void TypeRenameTransform::processStmt(Stmt *S)
   }
   if (auto E = dyn_cast<MemberExpr>(S)) {
     if (E->hasExplicitTemplateArgs()) {
-      
+
       unsigned N = E->getNumTemplateArgs();
       auto TAL = E->getTemplateArgs();
       for (unsigned I = 0; I < N; ++I) {
@@ -318,29 +318,29 @@ void TypeRenameTransform::processStmt(Stmt *S)
     }
   }
   else if (auto E = dyn_cast<CXXNewExpr>(S)) {
-    processTypeLoc(E->getAllocatedTypeSourceInfo()->getTypeLoc());  
+    processTypeLoc(E->getAllocatedTypeSourceInfo()->getTypeLoc());
   }
   else if (auto E = dyn_cast<ExplicitCastExpr>(S)) {
-    processTypeLoc(E->getTypeInfoAsWritten()->getTypeLoc());  
+    processTypeLoc(E->getTypeInfoAsWritten()->getTypeLoc());
   }
   else if (auto E = dyn_cast<CXXTemporaryObjectExpr>(S)) {
     if (auto TSI = E->getTypeSourceInfo()) {
-      processTypeLoc(TSI->getTypeLoc());  
+      processTypeLoc(TSI->getTypeLoc());
     }
   }
   else if (auto E = dyn_cast<CXXUnresolvedConstructExpr>(S)) {
     if (auto TSI = E->getTypeSourceInfo()) {
-      processTypeLoc(TSI->getTypeLoc());  
+      processTypeLoc(TSI->getTypeLoc());
     }
   }
   else if (auto E = dyn_cast<VAArgExpr>(S)) {
     // TODO: This will be a problem if the arg is also a macro expansion...
-    processTypeLoc(E->getWrittenTypeInfo()->getTypeLoc(), true);  
+    processTypeLoc(E->getWrittenTypeInfo()->getTypeLoc(), true);
   }
   else if (auto E = dyn_cast<UnaryExprOrTypeTraitExpr>(S)) {
     // sizeof etc.
     if (E->isArgumentType()) {
-      processTypeLoc(E->getArgumentTypeInfo()->getTypeLoc());  
+      processTypeLoc(E->getArgumentTypeInfo()->getTypeLoc());
     }
   }
   else if (auto E = dyn_cast<ObjCProtocolExpr>(S)) {
@@ -353,26 +353,26 @@ void TypeRenameTransform::processStmt(Stmt *S)
   else if (auto E = dyn_cast<ObjCEncodeExpr>(S)) {
     // @encode(X)
     if (auto TSI = E->getEncodedTypeSourceInfo()) {
-      processTypeLoc(TSI->getTypeLoc());  
-    }    
+      processTypeLoc(TSI->getTypeLoc());
+    }
   }
   else if (auto E = dyn_cast<ObjCMessageExpr>(S)) {
     // handle the case where [X alloc] and X in a type we want to rename
     if (E->getReceiverKind() == ObjCMessageExpr::Class) {
       if (auto TSI = E->getClassReceiverTypeInfo()) {
-        processTypeLoc(TSI->getTypeLoc());  
-      }          
+        processTypeLoc(TSI->getTypeLoc());
+      }
     }
   }
   else {
     // TODO: Fill in other Stmt/Expr that has type info
     // TODO: Verify correctness and furnish test cases
   }
-  
+
   for (auto I = S->child_begin(), E = S->child_end(); I != E; ++I) {
     processStmt(*I);
   }
-  
+
   popIndent();
 }
 
@@ -380,7 +380,7 @@ void TypeRenameTransform::processFunctionDecl(FunctionDecl *D)
 {
   // if no type source info, it's a void f(void) function
   auto TSI = D->getTypeSourceInfo();
-  if (TSI) {      
+  if (TSI) {
     processTypeLoc(TSI->getTypeLoc());
   }
 
@@ -388,23 +388,23 @@ void TypeRenameTransform::processFunctionDecl(FunctionDecl *D)
   if (auto CD = dyn_cast<CXXConstructorDecl>(D)) {
     auto BL = CD->getLocation();
     std::string newName;
-    if (BL.isValid() && CD->getParent()->getLocation() != BL && 
+    if (BL.isValid() && CD->getParent()->getLocation() != BL &&
         nameMatches(CD->getParent(), newName, true)) {
       renameLocation(BL, newName);
     }
-    
+
     for (auto II = CD->init_begin(), IE = CD->init_end(); II != IE; ++II) {
       if ((*II)->isBaseInitializer()) {
-        processTypeLoc((*II)->getBaseClassLoc());        
+        processTypeLoc((*II)->getBaseClassLoc());
       }
-      
+
       auto X = (*II)->getInit();
       if (X) {
         processStmt(X);
       }
     }
   }
-  
+
   // dtor
   if (auto DD = dyn_cast<CXXDestructorDecl>(D)) {
     // if parent matches
@@ -413,9 +413,9 @@ void TypeRenameTransform::processFunctionDecl(FunctionDecl *D)
     auto P = DD->getParent();
     if (BL.isValid() && P->getLocation() != BL &&
         nameMatches(P, newName, true)) {
-    
-      // can't use renameLocation since this is a tricy case        
-    
+
+      // can't use renameLocation since this is a tricy case
+
       // need to use raw_identifier because Lexer::findLocationAfterToken
       // performs a raw lexing
       SourceLocation EL =
@@ -430,11 +430,11 @@ void TypeRenameTransform::processFunctionDecl(FunctionDecl *D)
       //   << ", nameAsString: " << P->getNameAsString() << ", len: " << P->getNameAsString().size()
       //   << ", DD nameAsString: " << DD->getNameAsString() << ", len: " << DD->getNameAsString().size()
       //   << "\n";
-        
+
       if (EL.isValid()) {
         // EL is 1 char after the dtor name ~Foo, so -1 == pos of 'o'
         SourceLocation NE = EL.getLocWithOffset(-1);
-        
+
         // we use the parent's name to see how much we should back off
         // if we use  D->getNameAsString(), we'd run into two problems:
         //   (1) the name would be ~Foo
@@ -449,33 +449,33 @@ void TypeRenameTransform::processFunctionDecl(FunctionDecl *D)
         }
         else {
         // TODO: Determine if it's a wrtiable file
-    
+
         // TODO: Determine if the location has already been touched or
         // needs skipping (such as in refactoring API user's code, then
         // the API headers need no changing since later the new API will be
-        // in place)              
+        // in place)
           replace(SourceRange(NB, NE), newName);
         }
       }
     }
   }
-  
+
   // rename the params' types
   for (auto PI = D->param_begin(), PE = D->param_end(); PI != PE; ++PI) {
     processParmVarDecl(*PI);
   }
-  
+
   // the name itself
   processQualifierLoc(D->getQualifierLoc());
-  
+
   // handle body
-  
+
   if (auto B = D->getBody()) {
     if (stmtInSameFileAsDecl(B, D)) {
       // llvm::errs() << indent() << "body? " << D->getBody() << "\n";
       processStmt(B);
     }
-  }  
+  }
 }
 
 void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
@@ -483,20 +483,20 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
   if (TL.isNull()) {
     return;
   }
-  
+
   auto BL = TL.getBeginLoc();
-  
+
   // ignore system headers
   if (shouldIgnore(BL)) {
     return;
   }
-  
+
   // is a result from macro expansion? sorry...
   if (BL.isMacroID() && !forceRewriteMacro) {
     llvm::errs() << "Cannot rename type from macro expansion at: " << loc(BL) << "\n";
     return;
   }
-  
+
   // TODO: Take care of spelling loc finesses
   // BL = sema->getSourceManager().getSpellingLoc(BL);
 
@@ -509,8 +509,8 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
   //   << "\n" << indent() << "qualType as str: " << QT.getAsString()
   //   << "\n" << indent() << "beginLoc: " << loc(TL.getBeginLoc())
   //   << "\n";
-    
-  switch(TL.getTypeLocClass()) {    
+
+  switch(TL.getTypeLocClass()) {
     case TypeLoc::FunctionProto:
     {
       if (auto FTL = TL.getAs<FunctionTypeLoc>()) {
@@ -519,7 +519,7 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
         }
       }
       break;
-    }    
+    }
     // an elaborated type loc captures the "prefix" of a type
     // for example, the elaborated type loc of "A::B::C" is A::B
     // we need to know if A::B and A are types we are renaming
@@ -531,7 +531,7 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
       }
       break;
     }
-    
+
     case TypeLoc::ObjCObject:
     {
       if (auto OT = TL.getAs<ObjCObjectTypeLoc>()) {
@@ -546,26 +546,26 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
       }
       break;
     }
-    
+
     case TypeLoc::InjectedClassName:
     {
       if (auto TSTL = TL.getAs<InjectedClassNameTypeLoc>()) {
         auto CD = TSTL.getDecl();
         std::string newName;
         if (nameMatches(CD, newName, true)) {
-          renameLocation(BL, newName);          
-        }      
+          renameLocation(BL, newName);
+        }
       }
       break;
     }
-    
+
     case TypeLoc::TemplateSpecialization:
     {
       if (auto TSTL = TL.getAs<TemplateSpecializationTypeLoc>()) {
-        
+
         // See if it's the template name that needs renaming
         auto T = TL.getTypePtr();
-        
+
         if (auto TT = dyn_cast<TemplateSpecializationType>(T)) {
           auto TN = TT->getTemplateName();
           auto TD = TN.getAsTemplateDecl();
@@ -579,7 +579,7 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
 
         // iterate through the args
         for (unsigned I = 0, E = TSTL.getNumArgs(); I != E; ++I) {
-          
+
           // need to see if the template argument is also a type
           // (we skip things like Foo<1> )
           auto AL = TSTL.getArgLoc(I);
@@ -587,7 +587,7 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
           if (A.getKind() != TemplateArgument::Type) {
             continue;
           }
-          
+
           if (auto TSI = AL.getTypeSourceInfo()) {
             processTypeLoc(TSI->getTypeLoc(), forceRewriteMacro);
           }
@@ -595,7 +595,7 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
       }
       break;
     }
-    
+
     // typedef is tricky
     case TypeLoc::Typedef:
     {
@@ -607,15 +607,15 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
           renameLocation(BL, newName);
         }
       }
-      
+
       break;
     }
-    
+
     // leaf types
-    // TODO: verify correctness, need test cases for each    
+    // TODO: verify correctness, need test cases for each
     // TODO: Check if Builtin works
     case TypeLoc::Builtin:
-    case TypeLoc::Enum:    
+    case TypeLoc::Enum:
     case TypeLoc::Record:
     case TypeLoc::ObjCInterface:
     case TypeLoc::TemplateTypeParm:
@@ -624,11 +624,11 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
       // read Clang`s definition (in RecordDecl) -- not exactly what you think
       // so we use the length of name
 
-      std::string newName;      
+      std::string newName;
       if (auto TT = dyn_cast<TagType>(TL.getTypePtr())) {
         auto TD = TT->getDecl();
         if (nameMatches(TD, newName, true)) {
-          renameLocation(BL, newName);          
+          renameLocation(BL, newName);
         }
       }
       else {
@@ -638,12 +638,12 @@ void TypeRenameTransform::processTypeLoc(TypeLoc TL, bool forceRewriteMacro)
       }
       break;
     }
-      
-      
+
+
     default:
       break;
   }
-  
+
   processTypeLoc(TL.getNextTypeLoc(), forceRewriteMacro);
   popIndent();
 }
@@ -658,9 +658,9 @@ void TypeRenameTransform::processQualifierLoc(NestedNameSpecifierLoc NNSL,
     if (NNSK == NestedNameSpecifier::TypeSpec || NNSK == NestedNameSpecifier::TypeSpecWithTemplate) {
       processTypeLoc(NNSL.getTypeLoc(), forceRewriteMacro);
     }
-    
+
     NNSL = NNSL.getPrefix();
-  }  
+  }
 }
 
 void TypeRenameTransform::processParmVarDecl(ParmVarDecl *P)
@@ -669,9 +669,9 @@ void TypeRenameTransform::processParmVarDecl(ParmVarDecl *P)
   if (PTSI) {
     processTypeLoc(PTSI->getTypeLoc());
   }
-  
+
   // then the default vars
   if (P->hasInit()) {
     processStmt(P->getInit());
-  }  
+  }
 }
