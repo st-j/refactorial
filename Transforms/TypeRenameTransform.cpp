@@ -22,6 +22,7 @@ protected:
   void collectRenameDecls(DeclContext *DC, bool topLevel = false);
   void processDeclContext(DeclContext *DC, bool topLevel = false);  
   void processStmt(Stmt *S);
+  void processCXXRecordDecl(CXXRecordDecl *D);
   
   // forceRewriteMacro is needed to handle expressions like VAArgExpr
   // TODO: be smart, if TL is not within a marco, it's do-able
@@ -127,6 +128,24 @@ void TypeRenameTransform::collectRenameDecls(DeclContext *DC, bool topLevel)
   popIndent();  
 }
 
+void TypeRenameTransform::processCXXRecordDecl(CXXRecordDecl *D)
+{
+  if (!D->hasDefinition()) {
+    return;
+  }
+  for (auto It = D->bases_begin(), E = D->bases_end(); It != E; ++It) {
+    if (auto Info = It->getTypeSourceInfo()) {
+      processTypeLoc(Info->getTypeLoc());
+    }
+  }
+
+  for (auto It = D->friend_begin(), E = D->friend_end(); It != E; ++It) {
+    if (auto FT = (*It)->getFriendType()) {
+      processTypeLoc(FT->getTypeLoc());
+    }
+  }
+}
+
 void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
 {  
   // TODO: Skip globally touched locations
@@ -146,11 +165,9 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
     // llvm::errs() << indent() << (*I)->getDeclKindName() << ", at: " << loc(L) << "\n";
 
     if (auto D = dyn_cast<ClassTemplateDecl>(*I)) {
-      auto TD = D->getTemplatedDecl();
-      if (auto RD = dyn_cast<CXXRecordDecl>(TD)) {
-        // we need to descend on our own      
-        processDeclContext(RD);
-      }
+      CXXRecordDecl *CRD = D->getTemplatedDecl();
+      processCXXRecordDecl(CRD);
+      processDeclContext(CRD);
     }
     else if (auto D = dyn_cast<ClassTemplateSpecializationDecl>(*I)) {
       if (auto TSI = D->getTypeAsWritten()) {
@@ -159,23 +176,8 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
     }
     else if (auto TD = dyn_cast<TagDecl>(*I)) {
       if (auto CRD = dyn_cast<CXXRecordDecl>(TD)) {
-        // can't call bases_begin() if there's no definition
-        if (CRD->hasDefinition()) {        
-          for (auto BI = CRD->bases_begin(), BE = CRD->bases_end();
-               BI != BE; ++BI) {
-            if (auto TSI = BI->getTypeSourceInfo()) {
-              processTypeLoc(TSI->getTypeLoc());
-            }
-          }
-          
-          for (auto FI = CRD->friend_begin(), FE = CRD->friend_end();
-               FI != FE; ++FI) {
-            if (auto TSI = (*FI)->getFriendType()) {
-              processTypeLoc(TSI->getTypeLoc());
-            }            
-          }
-        }
-      } // if a CXXRecordDecl
+        processCXXRecordDecl(CRD);
+      }
     }
     else if (auto D = dyn_cast<FunctionTemplateDecl>(*I)) {
       processFunctionDecl(D->getTemplatedDecl());
