@@ -165,6 +165,14 @@ void TypeRenameTransform::processDeclContext(DeclContext *DC, bool topLevel)
     // llvm::errs() << indent() << (*I)->getDeclKindName() << ", at: " << loc(L) << "\n";
 
     if (auto D = dyn_cast<ClassTemplateDecl>(*I)) {
+      auto Params = D->getTemplateParameters();
+      for (auto PI = Params->begin(), PE = Params->end(); PI != PE; ++PI) {
+        if (auto TParam = dyn_cast<TemplateTypeParmDecl>(*PI)) {
+          if (TParam->hasDefaultArgument()) {
+            processTypeLoc(TParam->getDefaultArgumentInfo()->getTypeLoc());
+          }
+        }
+      }
       CXXRecordDecl *CRD = D->getTemplatedDecl();
       processCXXRecordDecl(CRD);
       processDeclContext(CRD);
