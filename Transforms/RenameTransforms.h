@@ -128,7 +128,33 @@ protected:
     // special handling for TagDecl
     if (auto T = llvm::dyn_cast<clang::TagDecl>(D)) {
       auto KN = T->getKindName();
-      assert(KN && "getKindName() must return a non-NULL value");
+      /* The following assert does not compile on my machine (OSX, homebrewed clang 3.5.1). Fails with:
+
+        In file included from /Users/stefan/SCM/Thirdparty/refactorial/Transforms/FunctionRenameTransform.cpp:6:
+        /Users/stefan/SCM/Thirdparty/refactorial/Transforms/RenameTransforms.h:131:14: error: no viable conversion from
+              'llvm::StringRef' to 'bool'
+              assert(KN && "getKindName() must return a non-NULL value");
+                     ^~
+        /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/include/assert.h:93:25: note: 
+              expanded from macro 'assert'
+            (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __FILE__, __LINE__, #e) : (void)0)
+                                ^
+        /usr/local/Cellar/llvm/3.5.1/include/llvm/ADT/StringRef.h:205:5: note: candidate function
+            operator std::string() const {
+            ^
+        In file included from /Users/stefan/SCM/Thirdparty/refactorial/Transforms/FunctionRenameTransform.cpp:6:
+        /Users/stefan/SCM/Thirdparty/refactorial/Transforms/RenameTransforms.h:131:17: error: invalid operands to binary
+              expression ('llvm::StringRef' and 'const char [43]')
+              assert(KN && "getKindName() must return a non-NULL value");
+                     ~~ ^  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        /Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.10.sdk/usr/include/assert.h:93:25: note: 
+              expanded from macro 'assert'
+            (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __FILE__, __LINE__, #e) : (void)0)
+                                ^
+        2 errors generated.
+        
+      */
+      //assert(KN && "getKindName() must return a non-NULL value");
       QN.insert(0, KN);
       QN.insert(KN.size(), " ");
     }
