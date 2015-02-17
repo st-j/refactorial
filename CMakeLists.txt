@@ -2,33 +2,8 @@ CMAKE_MINIMUM_REQUIRED (VERSION 2.8)
 
 PROJECT (Refactorial)
 
-# debian packet dependencies:
-#
-# sudo apt-get install libyaml-cpp-dev clang
-#
-# also need llvm+clang in version 3.2:
-# {{{
-#     export BRANCH=release_32
-#     git clone http://llvm.org/git/llvm.git $HOME/llvm.git --branch $BRANCH
-#     git clone http://llvm.org/git/clang.git $HOME/llvm.git/tools/clang --branch $BRANCH
-#     mkdir -p $HOME/llvm.git/build && cd $HOME/llvm.git/build
-#     cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=true -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$HOME/llvm.install -DLLVM_TARGETS_TO_BUILD="X86"
-#     make -j`getconf _NPROCESSORS_ONLN` all install
-# }}}
-#
-# compiling with gcc 4.8 seems to break, clang 3.3 works. do the following in your shell:
-# {{{
-#     export CC=clang
-#     export CXX=clang++
-#     mkdir build && cd build
-#     cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
-#     make
-# }}}
+SET (CMAKE_MODULE_PATH "${Refactorial_SOURCE_DIR}/CMake/Modules; ${CMAKE_MODULE_PATH}")
 
-# kinda hardcoded by trial-and-error...
-add_definitions("-fno-rtti -Wno-c++11-extensions -Wno-nested-anon-types")
-
-add_definitions("-g")
 
 macro(llvm_get_config OUTPUT)
     execute_process(COMMAND ${LLVM_CONFIG_EXECUTABLE} ${ARGN}
@@ -75,21 +50,28 @@ endif(${LLVM_CONFIG_EXECUTABLE} MATCHES NOTFOUND)
 list(APPEND CLANG_LIBRARIES
     clangTooling clangEdit clangDriver
     clangFrontend clangLex clangParse
-    clangAnalysis clangSema clangRewriteCore
+    clangAnalysis clangSema clangRewrite
     clangSerialization clangEdit clangAST
     clangASTMatchers clangBasic
     )
 
 llvm_get_config(LLVM_CXXFLAGS "--cxxflags")
 llvm_get_config(LLVM_LIBRARY_DIRS "--libdir")
-llvm_get_config(LLVM_LIBRARIES "--libs" support mcparser)
+#llvm_get_config(LLVM_LIBRARIES "--libs" support mcparser)
+llvm_get_config(LLVM_LIBRARIES "--libs")
 string(REPLACE " " ";" LLVM_LIBRARIES "${LLVM_LIBRARIES}")
 
 find_library(PCRE_LIBRARY pcre)
 find_library(PCRECPP_LIBRARY pcrecpp)
 
+find_package(YAMLCPP REQUIRED)
+
+
+
 add_definitions(${LLVM_CXXFLAGS})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+add_definitions("-fexceptions")
+
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${YAMLCPP_INCLUDE_DIR})
 link_directories(${LLVM_LIBRARY_DIRS})
 
 add_executable(refactorial
@@ -112,7 +94,8 @@ target_link_libraries(refactorial
     ${LLVM_LIBRARIES}
     ${PCRE_LIBRARY}
     ${PCRECPP_LIBRARY}
-    dl pthread yaml-cpp
+    ${YAMLCPP_LIBRARIES}
+    dl pthread z curses
     )
 
 # debug crazy system-header-indlude-problems in linked clang:
