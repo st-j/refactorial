@@ -3,7 +3,7 @@ Compiling Refactorial on OSX Yosemite
 
 **WARNING:** This README and the changes to the CMake files in this fork are "**works-on-my-machine**" quality. I made the minimum effort to get stuff running on my own machine, and I've got no idea what it will do on yours. It might not even compile, and it might eat your cookis or steal your girlfriend. You've been warned.
 
-Installing clang
+Install clang
 ----------------
 
 Install llvm from homebrew:
@@ -16,6 +16,12 @@ Refactorial's CMake build requires `llvm-config` to be found in your shell's `PA
 
 Either temporarily add that directory to your path, or `brew link` the llvm package (have not tried the latter, so I cannot confirm that it works).
 
+Install yaml-cpp
+-----------------
+
+Install `yaml-cpp` via homebrew:
+
+    brew install yaml-cpp
 
 
 Compiling refactorial
@@ -32,10 +38,11 @@ Switch to clang-3.5 branch
 
 I've compiled it with
 
+    mkdir build && cd build
     CC=/usr/local/Cellar/llvm/3.5.1/bin/clang CXX=/usr/local/Cellar/llvm/3.5.1/bin/clang++ cmake -GNinja ..
     ninja
 
-If you used `brew link` to link homebrew's clang, configure the linked clang compiler in the `CC` and `CXX` variables (I believe it is called something like `clang-3.5`).
+If you have used `brew link` to link homebrew's clang, configure the linked clang compiler in the `CC` and `CXX` variables (I believe it is called something like `clang-3.5`).
 
 Using refactorial with CMake Projects
 -------------------------------------
